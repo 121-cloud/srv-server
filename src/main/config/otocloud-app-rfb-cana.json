@@ -1,0 +1,218 @@
+{
+	"main": "otocloud.app.rfb.cana.ReverseFactoringAppEngine",
+	"options": {
+		"config": {
+			"service_id": "otocloud-app-rfb-cana",
+			"service_name": "otocloud-app-rfb-cana",	
+			"app_inst_scope": ["1~1000"],		
+			"app_desc": "凯拿应付保理服务",
+			"master_role": "2",
+			"distributed_node_index": 0,			
+			"isolation_vertx_pool": false,
+			"api_register_server": {
+				"webserver_name": "121Node1"
+			},
+			"app_datasource": {
+				"config": {
+					"password": "www",
+					"authSource": "121PSC.sa",
+					"db_name": "RFB_CANA",
+					"connection_string": "mongodb://10.10.23.112:27017/?maxPoolSize=200&waitQueueMultiple=1000",
+					"username": "sa"
+				},
+				"sharedpool": "mongo-psc"
+			},
+			"app_subscribers": [
+				{
+					"instid": "1",
+					"instname": "rfb_1",
+					"account": "1",
+					"acccode": "1",
+					"appcode": "rfb",
+					"bizroleid": "2"
+				},
+				{
+					"instid": "89",
+					"instname": "rfb_89",
+					"account": "89",
+					"acccode": "89",
+					"appcode": "rfb",
+					"bizroleid": "2"					
+				}
+			],
+			"component_deployment": [{
+					"name": "component_maven:otocloud:otocloud-framework-scheduler:1.0.0-SNAPSHOT::scheduler",
+					"type": "app_engine"
+				}
+			],
+			"component_common": {					
+			},
+			"component_config": {
+				 "scheduler": {
+				 	"main": "otocloud.framework.scheduler.OtoCloudSchedulerComponentImpl",
+		      		"options": {
+        				"config" :  {
+	        				"init": {
+								"org.quartz.scheduler.instanceName": "scheduler",
+								"org.quartz.scheduler.rmi.export": "false",
+								"org.quartz.scheduler.rmi.proxy": "false",
+								"org.quartz.scheduler.wrapJobExecutionInUserTransaction": "false", 
+								"org.quartz.threadPool.class": "org.quartz.simpl.SimpleThreadPool",
+								"org.quartz.threadPool.threadCount": "10",
+								"org.quartz.threadPool.threadPriority": "5",
+								"org.quartz.threadPool.threadsInheritContextClassLoaderOfInitializingThread": "true", 
+								"org.quartz.jobStore.misfireThreshold": "60000",
+								"org.quartz.jobStore.class": "org.quartz.impl.jdbcjobstore.JobStoreTX",
+								"org.quartz.jobStore.driverDelegateClass": "org.quartz.impl.jdbcjobstore.StdJDBCDelegate",
+								"org.quartz.jobStore.useProperties": "true",
+								"org.quartz.jobStore.tablePrefix": "qrtz_",
+								"org.quartz.jobStore.dataSource": "qzDS",
+								"org.quartz.dataSource.qzDS.driver": "com.mysql.jdbc.Driver",
+								"org.quartz.dataSource.qzDS.URL": "jdbc:mysql://localhost:3306/121db",
+								"org.quartz.dataSource.qzDS.user": "root",
+								"org.quartz.dataSource.qzDS.password": "www",
+								"org.quartz.dataSource.qzDS.maxConnection": "10"
+							},
+							"job_packages": [
+								{"name": "otocloud_maven:otocloud:otocloud-app-rfb-cana-vendor:1.0.0-SNAPSHOT"},
+								{"name": "otocloud_maven:otocloud:otocloud-app-rfb-cana-contract:1.0.0-SNAPSHOT"},
+								{"name": "otocloud_maven:otocloud:otocloud-app-rfb-cana-invoice:1.0.0-SNAPSHOT"}
+							]
+						}
+					 }
+				 }
+			},
+			"inst_common": {
+				"component_common": {
+					
+				},
+				"component_config": {
+					"busi_log": {
+						"main":"otocloud.app.rfb.cana.log.LogServiceComponent",
+						"options":{
+							"config":{
+
+							}
+						}
+					},
+					"corpsys_setting": {
+						"options": {
+							"config": {
+								
+							}
+						},
+						"main": "otocloud.app.rfb.cana.init.corpsysinfo.CorpSysSettingActivity"
+					},
+					"component_setting": {
+						"options": {
+							"config": {
+								
+							}
+						},
+						"main": "otocloud.app.rfb.cana.init.component.ComponentSettingActivity"
+					},
+					"corpbiz_setting": {
+						"options": {
+							"config": {
+								
+							}
+						},
+						"main": "otocloud.app.rfb.cana.init.corpbizinfo.CorpBizSettingActivity"
+					},
+					"dataupload_policy": {
+						"options": {
+							"config": {
+								
+							}
+						},
+						"main": "otocloud.app.rfb.cana.init.uploadpolicy.DataUploadPolicyActivity"
+					},
+					"vendor_activity": {
+						"options": {
+							"config": {
+								"transform_batch_paging": {
+									"sort_field": "ts",
+									"sort_direction": 1,
+									"page_size": 100
+								},							
+								"commit_batch_paging": {
+									"sort_field": "ts",
+									"sort_direction": 1,
+									"page_size": 100
+								}
+							}
+						},
+						"main": "otocloud.app.rfb.cana.vendor.VendorBizActivity"
+					},
+					"contract_activity": {
+						"options": {
+							"config": {
+								"transform_batch_paging": {
+									"sort_field": "ts",
+									"sort_direction": 1,
+									"page_size": 100
+								},							
+								"commit_batch_paging": {
+									"sort_field": "ts",
+									"sort_direction": 1,
+									"page_size": 100
+								}
+							}
+						},
+						"main": "otocloud.app.rfb.cana.contract.ContractBizActivity"
+					},
+					"invoice_activity": {
+						"options": {
+							"config": {
+								"transform_batch_paging": {
+									"sort_field": "ts",
+									"sort_direction": 1,
+									"page_size": 100
+								},							
+								"commit_batch_paging": {
+									"sort_field": "ts",
+									"sort_direction": 1,
+									"page_size": 100
+								}
+							}
+						},
+						"main": "otocloud.app.rfb.cana.invoice.InvoiceBizActivity"
+					}
+				},
+				"component_deployment": [{
+					"name": "component_maven:otocloud:otocloud-app-rfb-cana-log:1.0.0-SNAPSHOT::busi_log"
+				},
+				{
+					"name": "component_maven:otocloud:otocloud-app-rfb-cana-init:1.0.0-SNAPSHOT::corpsys_setting"
+				},
+				{
+					"name": "component_maven:otocloud:otocloud-app-rfb-cana-init:1.0.0-SNAPSHOT::corpbiz_setting"
+				},
+				{
+					"name": "component_maven:otocloud:otocloud-app-rfb-cana-init:1.0.0-SNAPSHOT::component_setting"
+				},	
+				{
+					"name": "component_maven:otocloud:otocloud-app-rfb-cana-init:1.0.0-SNAPSHOT::dataupload_policy"
+				},			
+				{
+					"name": "component_maven:otocloud:otocloud-app-rfb-cana-vendor:1.0.0-SNAPSHOT::vendor_activity"
+				},
+				{
+					"name": "component_maven:otocloud:otocloud-app-rfb-cana-contract:1.0.0-SNAPSHOT::contract_activity"
+				},
+				{
+					"name": "component_maven:otocloud:otocloud-app-rfb-cana-invoice:1.0.0-SNAPSHOT::invoice_activity"
+				}]
+			},
+			"inst_config": {
+				"1": {
+					"component_deployment": [],
+					"component_common": {						
+					},					
+					"component_config": {						
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,37 @@
+{
+    "main": "otocloud.account.AccountService",
+    "options": {
+        "config" :  {
+        	 "service_name": "otocloud-acct-rel",
+        	 "api_register_server": {
+                "webserver_name": "121Node1"
+             },
+             "sys_datasource": {
+			    "sharedpool": "jdbc-psc",
+			    "config": {
+					  "url": "jdbc:mysql://10.10.23.112:3306/121db_new?useUnicode=true&characterEncoding=UTF-8",
+					  "driver_class": "com.mysql.jdbc.Driver",
+					  "max_pool_size": 30,
+					  "user": "test",
+					  "password": "test"
+				}
+			 },
+        	 "component_deployment": [
+		 	 ],
+		 	 "component_common": {
+			  },	  
+			  "component_config": { 
+			      "account": {
+			      		"options": {
+	        				"config" :  {
+	        					"auth_service": {
+	        						"service_name": "otocloud-auth"
+	        					}
+							}
+						 }
+				   }
+     	 	  }
+		 	    
+		 }
+    }
+}

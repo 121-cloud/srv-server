@@ -1,0 +1,38 @@
+{
+    "container_name": "121Node1", 
+    "vertx_pool_size": 3, 
+    "vertx_options": {
+        "metricsOptions":{
+        	"enabled": true
+    	}
+    },
+    "otocloud_maven_factory": {
+    	"vertx.maven.localRepo": "E:/YONYOU/NC/121Cloud/deployment/121DEP-REPO",
+        "vertx.maven.remoteRepos": "http://172.16.51.12/nexus/content/groups/otocloud-all/"
+    }, 
+    "otocloud_http_factory": {
+        "address_base": "http://localhost:8083/121DEP-REPO/"
+    }, 
+    "container_components":[
+	    {
+	        "name": "otocloud_maven:otocloud:otocloud-webserver:1.0.0-SNAPSHOT::container-manager-agent"
+	    },
+	    {
+	        "name": "otocloud_maven:otocloud:otocloud-devops-server-agent:1.0.0-SNAPSHOT::container-monitor-agent"
+	    }
+    ], 
+    "module_deployment": [
+        {
+            "module_id": "1000100010003781KD26", 
+            "name": "otocloud_maven:otocloud:otocloud-acct-rel:1.0.0-SNAPSHOT::otocloud-acct-rel"
+        }, 
+        {
+            "module_id": "1000100010003781KD28", 
+            "name": "otocloud_maven:otocloud:otocloud-auth:1.0.0-SNAPSHOT::otocloud-auth"
+        },
+        {
+            "module_id": "1000100010003781KD29", 
+            "name": "otocloud_maven:otocloud:otocloud-app-rfb-cana:1.0.0-SNAPSHOT::otocloud-app-rfb-cana"
+        }
+    ]
+}

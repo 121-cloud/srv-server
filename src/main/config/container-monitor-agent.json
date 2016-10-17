@@ -1,0 +1,11 @@
+{
+	"main":"otocloud.devops.server.monitor.DevopsMonitorAdaptor",
+	"options":{
+		"config":{
+			"manage_port":8081,
+			"monitor_port":8082,
+			"servermanager_ip":"127.0.0.1",
+			"servermanager_port":8901
+		}
+	}
+}

@@ -1,0 +1,9 @@
+{
+	"main": "otocloud.webserver.WebServerVerticle",
+	"options" : {
+		"config" : {
+			"webserver_name": "121webserver-N01",
+			"http.port": 8084
+		}
+	}
+}

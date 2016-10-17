@@ -1,0 +1,8 @@
+{
+	"main": "otocloud.webserver.WebServerVerticle",
+	"options" : {
+		"config" : {
+			"webserver_name": "121Node1"
+		}
+	}
+}
