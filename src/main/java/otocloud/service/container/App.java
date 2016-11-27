@@ -9,13 +9,13 @@ public class App
 {
     public static void main( String[] args )
     {  	
-    	try{
+/*    	try{
     		System.out.println("enter key:");
     		int c;
     		c = System.in.read();
     	}catch(Exception ex){
     		
-    	} 	 	
+    	} 	 	*/
 
    	
     	OtoCloudServiceContainerImpl.internalMain(true);    	
