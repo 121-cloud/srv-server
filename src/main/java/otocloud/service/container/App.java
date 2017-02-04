@@ -15,8 +15,11 @@ public class App
     		c = System.in.read();
     	}catch(Exception ex){
     		
-    	} 	 	*/
-
+    	}    	*/
+    	
+    	//System.setProperty("jaxp.debug","TRUE");
+    	
+    	System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
    	
     	OtoCloudServiceContainerImpl.internalMain(true);    	
     	
