@@ -16,10 +16,7 @@ public class App
     	}catch(Exception ex){
     		
     	}    	*/
-    	
-    	
-/*    	RTMServer rtmServer = new RTMServer();
-    	rtmServer.startUp();*/
+
     	
         //System.setProperty("jaxp.debug","TRUE");
         
