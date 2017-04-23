@@ -17,11 +17,16 @@ public class App
     		
     	}    	*/
     	
-    	//System.setProperty("jaxp.debug","TRUE");
     	
+/*    	RTMServer rtmServer = new RTMServer();
+    	rtmServer.startUp();*/
+    	
+        //System.setProperty("jaxp.debug","TRUE");
+        
     	System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
-   	
+       	
     	OtoCloudServiceContainerImpl.internalMain(true);    	
+
     	
     }   
 

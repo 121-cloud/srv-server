@@ -3,17 +3,6 @@
  */
 package otocloud.service.container;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import com.hazelcast.config.Config;
-
 import io.vertx.core.Future;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -27,6 +16,16 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.spi.VerticleFactory;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import otocloud.common.CommandCodec;
 import otocloud.common.CommandResultCodec;
 import otocloud.common.OtoCloudDirectoryHelper;
@@ -79,7 +78,7 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
 	private JsonObject vertxOptionsCfg;
 	private JsonObject mavenCfg;
 	private JsonArray serviceDeploymentList;
-	private Config clusterCfg;
+	private JsonObject clusterCfg;
 	private boolean clusterEnabled = false;
 	private boolean hasContainerComps = true;	
 	private JsonArray manageComponentList;
@@ -247,26 +246,40 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
 			vertx = Vertx.vertx();
 			registerFactory();
 		}else{				
-			loadClusterConfig();				
-			VertxOptions options = OtoCloudServiceImpl.createVertxOptions(containerCfg, clusterCfg, null);				
-			// 鍒涘缓缇ら泦Vertx杩愯鏃剁幆澧�
-			Vertx.clusteredVertx(options, res -> {
-				// 杩愯鏃跺垱寤哄畬鍚庡垵濮嬪寲
-				if (res.succeeded()) {
-					// 鍒涘缓vertx瀹炰緥
-					vertx = res.result();	
-					
-					vertx.eventBus().registerCodec(new CommandCodec());
-					vertx.eventBus().registerCodec(new CommandResultCodec());
-					
-					registerFactory();
-					initFuture.complete();
-				} else {
-					futureStatusRollback();
-					Throwable err = res.cause();
-					initFuture.fail(err);
+			//loadClusterConfig();			
+			String zkCfgFilePath = OtoCloudDirectoryHelper.getConfigDirectory() + "zookeeper.json";	
+			
+			Vertx.vertx().fileSystem().readFile(zkCfgFilePath, zkResult -> {
+	    	    if (zkResult.succeeded()) {
+	    	    	
+	    	    	String zfFileContent = zkResult.result().toString(); 
+	    	        System.out.println(zfFileContent);
+	    	        clusterCfg = new JsonObject(zfFileContent);			
+			
+					VertxOptions options = OtoCloudServiceImpl.createVertxOptions(containerCfg, clusterCfg, null);				
+					// 鍒涘缓缇ら泦Vertx杩愯鏃剁幆澧�
+					Vertx.clusteredVertx(options, res -> {
+						// 杩愯鏃跺垱寤哄畬鍚庡垵濮嬪寲
+						if (res.succeeded()) {
+							// 鍒涘缓vertx瀹炰緥
+							vertx = res.result();	
+							
+							vertx.eventBus().registerCodec(new CommandCodec());
+							vertx.eventBus().registerCodec(new CommandResultCodec());
+							
+							registerFactory();
+							initFuture.complete();
+						} else {
+							futureStatusRollback();
+							Throwable err = res.cause();
+							initFuture.fail(err);
+			    	    }
+					});		
+	    	    }else{
+	    	    	System.err.println("zookeeper.json not found" + zkResult.cause());    	     
+	    	    	initFuture.fail(zkResult.cause());
 	    	    }
-			});		
+			});
 			
 		}	
 	}
@@ -392,34 +405,41 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
 	}
 	
 	private void unRegisterURI(Future<Void> unregFuture){
-		if(!hasContainerComps){
-			unregFuture.complete();
-			return;
+		try{
+			if(!hasContainerComps){
+				unregFuture.complete();
+				return;
+			}
+			
+			if(restApiRegisterIds.size() > 0){		
+				unregFuture.complete();
+				return;			
+			}
+			
+			JsonArray uriMappingInfos = new JsonArray();
+			restApiRegisterIds.forEach(value->{
+				JsonObject srvRegInfo = new JsonObject().put("registerId", value);
+				uriMappingInfos.add(srvRegInfo);
+			});
+			
+			vertx.eventBus().send(containerCfg.getString("webserver_name","") + "." + REST_URI_UNREG,
+					uriMappingInfos, ret->{
+						if(ret.succeeded()){
+							unregFuture.complete();
+						}else{
+							Throwable err = ret.cause();
+							//err.printStackTrace();
+							logger.error(err.getMessage(), err);
+							unregFuture.fail(err);
+						}
+						
+			});		
+		}catch(Exception ex){
+			//Throwable err = ret.cause();
+			//err.printStackTrace();
+			logger.error(ex.getMessage(), ex);
+			unregFuture.fail(ex.getCause());
 		}
-		
-		if(restApiRegisterIds.size() > 0){		
-			unregFuture.complete();
-			return;			
-		}
-		
-		JsonArray uriMappingInfos = new JsonArray();
-		restApiRegisterIds.forEach(value->{
-			JsonObject srvRegInfo = new JsonObject().put("registerId", value);
-			uriMappingInfos.add(srvRegInfo);
-		});
-		
-		vertx.eventBus().send(containerCfg.getString("webserver_name","") + "." + REST_URI_UNREG,
-				uriMappingInfos, ret->{
-					if(ret.succeeded()){
-						unregFuture.complete();
-					}else{
-						Throwable err = ret.cause();
-						//err.printStackTrace();
-						logger.error(err.getMessage(), err);
-						unregFuture.fail(err);
-					}
-					
-		});		
 		
 	}
 	
@@ -443,9 +463,9 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
 		}
 	}
 	
-	private void loadClusterConfig() {
+/*	private void loadClusterConfig() {
 		clusterCfg = OtoCloudServiceImpl.loadClusterConfig();
-	}
+	}*/
 	
 	public void loadConfig(Future<Void> loadFuture) {	
 
@@ -782,7 +802,7 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
 		}	
 	}
 	
-	private void unregisterHandlers(Future<Void> unregFuture) {
+/*	private void unregisterHandlers(Future<Void> unregFuture) {
 		if(handlers != null && handlers.size() > 0){
 			Integer size = handlers.size();
 			AtomicInteger stoppedCount = new AtomicInteger(0);			
@@ -812,7 +832,7 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
 		}
 
 	}
-
+*/
 	
 
 	/**
@@ -864,10 +884,11 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
 	
 	private void destroyManagementComponents(Future<Void> stopFuture){
 		unRegisterFactory();
-		Future<Void> unregHandlerfuture = Future.future();
+/*		Future<Void> unregHandlerfuture = Future.future();
 		unregisterHandlers(unregHandlerfuture);
 		unregHandlerfuture.setHandler(unregHandlerRet -> {
-    		if(unregHandlerRet.succeeded()){   
+    		if(unregHandlerRet.succeeded()){   */
+		
     			Future<Void> unregFuture = Future.future();
     			unRegisterURI(unregFuture);   		
     			unregFuture.setHandler(unregRet->{
@@ -891,13 +912,14 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
             			stopFuture.fail(err);
     				}
     			});
-    		}else{
+    			
+ /*   		}else{
     			Throwable err = unregHandlerRet.cause();
     			//err.printStackTrace();   
     			logger.error(err.getMessage(), err);
     			stopFuture.fail(err);
     		}
-		});
+		});*/
 	}
 	
 	
@@ -1092,50 +1114,54 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
 		Vertx appVertx = srvVertxs.get(serviceName);		
 		appVertx.undeploy(deploymentId,res -> {
 			if(res.succeeded()){
+				if(containerClosing){
+					undepFuture.complete();	
+				}else{
 				
-				boolean isolationJar = false;
-				int pos = -1;
-				for(int i=0;i<serviceDeploymentList.size();i++){
-					String name = OtoCloudServiceFactory.getServiceName(serviceDeploymentList.getJsonObject(i).getString("name"));
-					if(serviceName.equals(name)){
-						isolationJar = true;
-						pos = i;
-						break;
-					}			
-				}
-				if(pos >= 0){
-					serviceDeploymentList.remove(pos);
-				}
-				
-				if(isolationJar){
-					Future<Void> unLoadFuture = Future.future();
-					OtoCloudServiceImpl.unLoadComponentJar(appVertx, deployment, unLoadFuture);
-					unLoadFuture.setHandler(unLoadRet -> {
-			    		if(unLoadRet.failed()){
-			    			Throwable err = unLoadRet.cause();
-			    			logger.error(err.getMessage(), err);
-			    			//err.printStackTrace();    
-			    		}
-			       	});			
-				}
-				
-				services.remove(serviceName);
-				srvVertxs.remove(serviceName);
-				logger.info("service: [" + serviceName + "] undeploy!");
-				
-				
-				String containerCfgFile = OtoCloudDirectoryHelper.getConfigDirectory() + "otocloud-container.json";	
-				Buffer containerCfgFileBuf = JsonUtil.writeToBuffer(containerCfg);
-
-				vertx.fileSystem().writeFile(containerCfgFile, containerCfgFileBuf, saveRet->{
-					if(saveRet.succeeded()){
-						
-					}else{
-						saveRet.cause().printStackTrace();
+					boolean isolationJar = false;
+					int pos = -1;
+					for(int i=0;i<serviceDeploymentList.size();i++){
+						String name = OtoCloudServiceFactory.getServiceName(serviceDeploymentList.getJsonObject(i).getString("name"));
+						if(serviceName.equals(name)){
+							isolationJar = true;
+							pos = i;
+							break;
+						}			
 					}
-				});
-				
-				undepFuture.complete();				
+					if(pos >= 0){
+						serviceDeploymentList.remove(pos);
+					}
+					
+					if(isolationJar){
+						Future<Void> unLoadFuture = Future.future();
+						OtoCloudServiceImpl.unLoadComponentJar(appVertx, deployment, unLoadFuture);
+						unLoadFuture.setHandler(unLoadRet -> {
+				    		if(unLoadRet.failed()){
+				    			Throwable err = unLoadRet.cause();
+				    			logger.error(err.getMessage(), err);
+				    			//err.printStackTrace();    
+				    		}
+				       	});			
+					}
+					
+					services.remove(serviceName);
+					srvVertxs.remove(serviceName);
+					logger.info("service: [" + serviceName + "] undeploy!");
+					
+					
+					String containerCfgFile = OtoCloudDirectoryHelper.getConfigDirectory() + "otocloud-container.json";	
+					Buffer containerCfgFileBuf = JsonUtil.writeToBuffer(containerCfg);
+	
+					vertx.fileSystem().writeFile(containerCfgFile, containerCfgFileBuf, saveRet->{
+						if(saveRet.succeeded()){
+							
+						}else{
+							saveRet.cause().printStackTrace();
+						}
+					});
+					
+					undepFuture.complete();			
+				}
 			}else{					
                	Throwable err = res.cause();
                	logger.error(err.getMessage(), err);
@@ -1223,7 +1249,7 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
 	}*/
 	
 	
-    public static void internalMain(String logConfigFile, boolean needCluster)
+    public static OtoCloudServiceContainer internalMain(String logConfigFile, boolean needCluster)
     {   	
     	//config("log4j2.xml");
     	//config(logConfigFile);
@@ -1231,9 +1257,9 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
     	OtoCloudServiceContainerImpl serviceContainer = new OtoCloudServiceContainerImpl(needCluster);
     	
     	//响应进程退出
-    	Runtime runtime = Runtime.getRuntime();  
+/*    	Runtime runtime = Runtime.getRuntime();  
     	Thread thread = new Thread(new ContainerShutDownListener(serviceContainer));  
-    	runtime.addShutdownHook(thread);  
+    	runtime.addShutdownHook(thread);  */
     	
     	Future<Void> initFuture = Future.future();
     	serviceContainer.init(initFuture);
@@ -1256,15 +1282,17 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
     			System.err.println("initialize failed" + err);
     		}
        	});
+    	
+    	return serviceContainer;
     }
 
-    public static void internalMain( boolean needCluster )
+    public static OtoCloudServiceContainer internalMain( boolean needCluster )
     {
     	//boolean needCluster = false;
 /*    	if(args != null && args.length > 0){
     		needCluster = Boolean.parseBoolean(args[0]);
     	}*/
-    	internalMain("log4j2.xml", needCluster);
+    	return internalMain("log4j2.xml", needCluster);
     }
 
 	/**
@@ -1280,7 +1308,7 @@ public class OtoCloudServiceContainerImpl extends OtoCloudServiceLifeCycleImpl i
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Config getClusterConfig() {		
+	public JsonObject getClusterConfig() {		
 		return clusterCfg;
 	}
 
