@@ -3,13 +3,13 @@
  */
 package otocloud.service.container.handler;
 
-import otocloud.framework.core.OtoCloudBusMessage;
-import otocloud.framework.core.OtoCloudEventHandlerBase;
-import otocloud.framework.core.OtoCloudServiceContainer;
-import otocloud.service.container.OtoCloudServiceContainerImpl;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import otocloud.framework.core.CommandMessage;
+import otocloud.framework.core.OtoCloudEventHandlerBase;
+import otocloud.framework.core.OtoCloudServiceContainer;
+import otocloud.service.container.OtoCloudServiceContainerImpl;
 
 
 /**
@@ -17,7 +17,7 @@ import io.vertx.core.json.JsonObject;
  * @date 2015年7月1日
  * @author lijing@yonyou.com
  */
-public class ServiceDeploymentHandler extends OtoCloudEventHandlerBase<JsonObject> {
+public class ServiceDeploymentHandler extends OtoCloudEventHandlerBase<JsonArray> {
 	
 	//{container}.platform.component.deploy
 	public static final String SERVICE_DEPLOYMENT = "container.service.deploy";
@@ -33,13 +33,13 @@ public class ServiceDeploymentHandler extends OtoCloudEventHandlerBase<JsonObjec
 	}
 
 	@Override
-	public void handle(OtoCloudBusMessage<JsonObject> msg) {
-		JsonObject body = msg.body();
-		System.out.println(body.toString());
+	public void handle(CommandMessage<JsonArray> msg) {
+/*		JsonObject body = msg.body();
+		System.out.println(body.toString());*/
 		
 		try{
 
-			JsonArray content = body.getJsonArray("content");
+			JsonArray content = msg.getContent(); //.getJsonArray("content");
 			JsonArray retContent = new JsonArray();
 	
 			Future<Void> depFuture = Future.future();

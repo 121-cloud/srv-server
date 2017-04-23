@@ -3,11 +3,11 @@
  */
 package otocloud.service.container.handler;
 
+import io.vertx.core.json.JsonObject;
+import otocloud.framework.core.CommandMessage;
 import otocloud.framework.core.CompUndeploymentHandler;
-import otocloud.framework.core.OtoCloudBusMessage;
 import otocloud.framework.core.OtoCloudEventHandlerBase;
 import otocloud.framework.core.OtoCloudServiceContainer;
-import io.vertx.core.json.JsonObject;
 
 
 /**
@@ -31,13 +31,13 @@ public class ComponentUndeploymentHandler extends OtoCloudEventHandlerBase<JsonO
 	}
 
 	@Override
-	public void handle(OtoCloudBusMessage<JsonObject> msg) {
-		JsonObject body = msg.body();
-		System.out.println(body.toString());
+	public void handle(CommandMessage<JsonObject> msg) {
+/*		JsonObject body = msg.body();
+		System.out.println(body.toString());*/
 
 		JsonObject compUnDepMsg = new JsonObject();
 		
-		JsonObject params = body.getJsonObject("queryParams");
+		JsonObject params = msg.getQueryParams(); //.getJsonObject("queryParams");
 		
 		String serviceName = params.getString("moduleName");
 		

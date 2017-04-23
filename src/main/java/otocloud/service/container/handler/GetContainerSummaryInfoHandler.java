@@ -3,14 +3,15 @@
  */
 package otocloud.service.container.handler;
 
+import io.vertx.core.json.JsonObject;
+
 import java.util.List;
 
 import otocloud.framework.app.engine.AppServiceEngine;
-import otocloud.framework.core.OtoCloudBusMessage;
+import otocloud.framework.core.CommandMessage;
 import otocloud.framework.core.OtoCloudEventHandlerBase;
 import otocloud.framework.core.OtoCloudService;
 import otocloud.framework.core.OtoCloudServiceContainer;
-import io.vertx.core.json.JsonObject;
 
 
 /**
@@ -34,7 +35,7 @@ public class GetContainerSummaryInfoHandler extends OtoCloudEventHandlerBase<Jso
 	}
 
 	@Override
-	public void handle(OtoCloudBusMessage<JsonObject> msg) {
+	public void handle(CommandMessage<JsonObject> msg) {
 
 		List<OtoCloudService> sysModuleList = container.getSystemServices();
 		Integer sysModuleSize = 0;
